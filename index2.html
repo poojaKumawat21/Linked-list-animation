@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linked List Visualizer</title>
+<style>
+  body {
+    background: radial-gradient(circle at top, #0b0c10 20%, #1f2833 100%);
+    color: #c5c6c7;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+
+  header {
+    background: linear-gradient(90deg, #45a29e, #66fcf1);
+    color: #0b0c10;
+    font-weight: 600;
+    padding: 20px 0;
+    font-size: 26px;
+    box-shadow: 0 4px 20px rgba(102, 252, 241, 0.4);
+  }
+
+  section {
+    max-width: 950px;
+    background: rgba(31, 40, 51, 0.95);
+    margin: 30px auto;
+    padding: 30px 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.6);
+  }
+
+  h2 { color: #66fcf1; }
+  p { text-align: left; line-height: 1.7; }
+
+  .animation-area {
+    margin-top: 30px;
+    padding: 20px;
+    border: 2px dashed #45a29e;
+    border-radius: 15px;
+    background: rgba(11,12,16,0.8);
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .node {
+    background: linear-gradient(145deg, #45a29e, #66fcf1);
+    color: #0b0c10;
+    font-weight: bold;
+    padding: 25px 35px;
+    margin: 10px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(102,252,241,0.5);
+    animation: popIn 0.6s ease-out;
+    transition: transform 0.5s, box-shadow 0.5s;
+  }
+
+  .arrow {
+    color: #66fcf1;
+    font-size: 35px;
+    margin: 0 15px;
+    animation: fadeArrow 0.6s ease;
+  }
+
+  .label {
+    font-weight: bold;
+    font-size: 18px;
+    color: #f1faee;
+    margin-right: 10px;
+  }
+
+  .null-label {
+    color: #ff6b6b;
+    font-weight: bold;
+    font-size: 18px;
+    margin-left: 10px;
+    opacity: 0.8;
+  }
+
+  input {
+    padding: 10px;
+    width: 200px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    margin: 10px;
+    text-align: center;
+  }
+
+  button {
+    background-color: #66fcf1;
+    border: none;
+    color: #0b0c10;
+    font-weight: bold;
+    padding: 10px 20px;
+    margin: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background-color: #45a29e;
+    color: white;
+    transform: scale(1.1);
+  }
+
+  select {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    font-weight: bold;
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.5) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  @keyframes fadeArrow {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes traverseGlow {
+    0% { box-shadow: 0 0 20px 10px #ffd60a; transform: scale(1.1); }
+    100% { box-shadow: 0 0 20px rgba(102,252,241,0.5); transform: scale(1); }
+  }
+
+  /* Circular animation */
+  .circular-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    animation: rotateList 10s linear infinite;
+  }
+
+  .circular-node {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+    background: linear-gradient(145deg, #45a29e, #66fcf1);
+    color: #0b0c10;
+    font-weight: bold;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(102,252,241,0.6);
+  }
+
+  .circle-arrow {
+    position: absolute;
+    color: #66fcf1;
+    font-size: 30px;
+  }
+
+  @keyframes rotateList {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+</style>
+</head>
+
+<body>
+<header>🔗 Linked List Visualizer (Singly & Circular)</header>
+
+<section>
+  <h2>About Linked Lists</h2>
+  <p>
+    A <b>Linked List</b> is a dynamic data structure in which elements (nodes)
+    are linked using pointers. Each node stores data and a reference to the next node.
+  </p>
+
+  <div>
+    <label><b>Select Mode:</b></label>
+    <select id="listMode" onchange="switchMode()">
+      <option value="singly">Singly Linked List</option>
+      <option value="circular">Circular Linked List</option>
+    </select>
+  </div>
+
+  <div id="definitionArea"></div>
+  <div class="animation-area" id="animation-area"></div>
+
+  <div>
+    <input type="text" id="nodeValue" placeholder="Enter node value" />
+    <button onclick="insertNode()">Insert Node</button>
+    <button onclick="deleteNode()">Delete Node</button>
+    <button onclick="traverseList()">Traverse</button>
+  </div>
+</section>
+
+<script>
+  const area = document.getElementById("animation-area");
+  const definition = document.getElementById("definitionArea");
+  let nodes = [];
+  let mode = "singly";
+
+  function switchMode() {
+    mode = document.getElementById("listMode").value;
+    nodes = [];
+    render();
+    showDefinition();
+  }
+
+  function showDefinition() {
+    if (mode === "singly") {
+      definition.innerHTML = `
+        <h2>Singly Linked List</h2>
+        <p>
+          Each node contains data and a pointer to the next node.
+          The last node points to <b>NULL</b>, marking the end of the list.
+        </p>
+      `;
+    } else {
+      definition.innerHTML = `
+        <h2>Circular Linked List</h2>
+        <p>
+          In a <b>Circular Linked List</b>, the last node points back to the first node.
+          Thus, traversal can continue in a circular fashion with no NULL.
+        </p>
+      `;
+    }
+  }
+
+  function render() {
+    area.innerHTML = "";
+    if (nodes.length === 0) return;
+
+    if (mode === "singly") {
+      const headLabel = document.createElement("span");
+      headLabel.className = "label";
+      headLabel.textContent = "HEAD →";
+      area.appendChild(headLabel);
+
+      nodes.forEach((node, i) => {
+        const div = document.createElement("div");
+        div.className = "node";
+        div.textContent = node;
+        area.appendChild(div);
+
+        if (i < nodes.length - 1) {
+          const arrow = document.createElement("span");
+          arrow.className = "arrow";
+          arrow.innerHTML = "&#8594;";
+          area.appendChild(arrow);
+        }
+      });
+
+      const nullLabel = document.createElement("span");
+      nullLabel.className = "null-label";
+      nullLabel.textContent = "NULL";
+      area.appendChild(nullLabel);
+
+    } else {
+      // Circular Linked List Visualization
+      const circle = document.createElement("div");
+      circle.className = "circular-container";
+
+      const radius = 110;
+      const centerX = 150;
+      const centerY = 150;
+
+      nodes.forEach((node, i) => {
+        const angle = (2 * Math.PI / nodes.length) * i;
+        const nodeDiv = document.createElement("div");
+        nodeDiv.className = "circular-node";
+        nodeDiv.style.top = `${centerY + radius * Math.sin(angle) - 20}px`;
+        nodeDiv.style.left = `${centerX + radius * Math.cos(angle) - 35}px`;
+        nodeDiv.textContent = node;
+        circle.appendChild(nodeDiv);
+
+        // Add arrow between nodes
+        const arrow = document.createElement("div");
+        arrow.className = "circle-arrow";
+        const nextAngle = (2 * Math.PI / nodes.length) * ((i + 1) % nodes.length);
+        arrow.style.top = `${centerY + radius * Math.sin((angle + nextAngle) / 2) - 5}px`;
+        arrow.style.left = `${centerX + radius * Math.cos((angle + nextAngle) / 2) - 5}px`;
+        arrow.innerHTML = "&#8594;";
+        circle.appendChild(arrow);
+      });
+
+      area.appendChild(circle);
+    }
+  }
+
+  function insertNode() {
+    const value = document.getElementById("nodeValue").value.trim();
+    if (value === "") return alert("⚠️ Enter a value to insert!");
+    nodes.push(value);
+    render();
+    document.getElementById("nodeValue").value = "";
+  }
+
+  function deleteNode() {
+    if (nodes.length === 0) return alert("⚠️ No nodes to delete!");
+    nodes.pop();
+    render();
+  }
+
+  function traverseList() {
+    if (nodes.length === 0) return alert("⚠️ No nodes to traverse!");
+    const nodeElements = document.querySelectorAll(".node, .circular-node");
+    let i = 0;
+    const interval = setInterval(() => {
+      nodeElements.forEach((node) => node.style.animation = "none");
+      nodeElements[i].style.animation = "traverseGlow 0.8s ease";
+      i++;
+      if (i >= nodeElements.length) {
+        if (mode === "circular") i = 0;
+        else {
+          clearInterval(interval);
+          setTimeout(() => nodeElements.forEach(n => n.style.animation = "none"), 1000);
+        }
+      }
+    }, 1000);
+  }
+
+  showDefinition();
+  render();
+</script>
+</body>
+</html>
